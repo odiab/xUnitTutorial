@@ -1,6 +1,4 @@
 using Moq;
-using xUnitTest.Core.Core;
-using xUnitTest.Core.Data;
 using xUnitTest.Core.Models;
 using xUnitTest.Core.Repository;
 
@@ -12,9 +10,19 @@ public class EmployeeRepositoryTest
     public void SelectByIdAsync_WithNullId_ThrowArgumentNullException()
     {
         // Arrange
-        var dbContext = new Mock<AppDbContext>();
-        var repository = new Mock<IRepository<Employee>>();
+        var employeeMock = new Mock<IEmployeeRepository>();
 
+        // Act
+        Func<Guid?, Task<Employee>> func = id => employeeMock.Object.SelectByIdAsync(id);
+
+        // Assert
+        Assert.ThrowsAsync<ArgumentNullException>(() => func(null));
+    }
+
+    [Fact]
+    public async Task SelectByIdAsync_WithIdValue_ReturnsListOfEmployees()
+    {
+        // Arrange
         var employee = new Employee
         {
             Id = Guid.NewGuid(),
@@ -28,22 +36,13 @@ public class EmployeeRepositoryTest
             PostalCode = "00000"
         };
 
-        // Act
-        Func<Guid?, Employee> func = id => repository.Setup(async m => await m.SelectByIdAsync(id)).Returns(employee);
-        var actual = repository.Setup(m => m.SelectByIdAsync(null)).ReturnsAsync(employee);
-
-
-        // Assert
-        Assert.Throws<ArgumentNullException>(() => func(null));
-    }
-
-    [Fact]
-    public void SelectByIdAsync_WithIdValue_ReturnsListOfEmployees()
-    {
-        // Arrange
+        var employeeMock = new Mock<IEmployeeRepository>();
+        employeeMock.Setup(repository => repository.SelectByIdAsync(It.IsAny<Guid?>())).ReturnsAsync(() => employee);
 
         // Act
+        var actual = await employeeMock.Object.SelectByIdAsync(It.IsAny<Guid?>());
 
         // Assert
+        Assert.Equal(employee, actual);
     }
 }
